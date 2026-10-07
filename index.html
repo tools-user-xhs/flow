@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>流程体系文档生成器 · AIGC 智能构建</title>
+<title>流程体系文档生成器</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:#e9eef3;font-family:'Microsoft YaHei','微软雅黑','Segoe UI',Roboto,sans-serif;padding:40px 24px;display:flex;flex-direction:column;align-items:center}
@@ -38,7 +38,7 @@
   .cover-add-row { margin-top: 12px; margin-bottom: 24px; }
 
   .doc-main-title { font-size: 2.6rem; font-weight: 700; color: #1e2b3c; border-left: 8px solid #2c7da0; padding-left: 24px; margin: 0 0 16px 0; line-height: 1.2; }
-  .doc-subhead { font-size: 1rem; color: #4a5b6e; margin-bottom: 32px; padding-left: 32px; font-style: italic; }
+  .doc-subhead { font-size: 1rem; color: #4a5b6e; margin-bottom: 32px; padding-left: 32px; font-style: italic; display: none; }
   .section-title { font-size: 1.8rem; font-weight: 700; color: #1e3d5e; margin: 36px 0 16px 0; padding-bottom: 8px; border-bottom: 2px solid #b0c4de; display: flex; align-items: center; }
   .section-title .num-badge { display: inline-block; background: #2c7da0; color: #fff; font-size: 1.3rem; font-weight: 600; width: 40px; height: 40px; line-height: 40px; text-align: center; border-radius: 8px; margin-right: 16px; }
   .table-container { width: 100%; overflow-x: auto; margin: 16px 0 24px 0; border-radius: 8px; border: 1px solid #cbd5e1; background: #fff; }
@@ -194,7 +194,7 @@
   </div>
 
   <h1 class="doc-main-title">流程体系文档</h1>
-  <div class="doc-subhead" id="docSubhead">基于 AIGC 自动生成 · 标准架构</div>
+  <div class="doc-subhead" id="docSubhead"></div>
 
   <div class="section-title"><span class="num-badge">1</span> 目的</div>
   <div class="paragraph-wrapper">
@@ -922,7 +922,7 @@
     };
   }
 
-  // ==================== 渲染流程图（保持原样） ====================
+  // ==================== 渲染流程图 ====================
   function renderFlowchartWithData(data, goalLabel, targetContainer, scale){
     var container = targetContainer || document.getElementById('flowchartCanvasContainer');
     if(!container) return;
@@ -1156,7 +1156,7 @@
   document.getElementById('targetFlowBtn').addEventListener('click', function(){
     var firstCell = document.querySelector('#table-basic tbody tr td:first-child');
     var defaultGoal = firstCell ? firstCell.textContent.trim() : '采购控制程序';
-    var newGoal = prompt('请输入流程目标（例如：采购控制程序、报价流程、招聘流程、研发流程）\n\n系统会根据目标智能切换整个文档的内容。', defaultGoal);
+    var newGoal = prompt('请输入流程目标（例如：采购控制程序、报价流程、招聘流程、研发流程）\n\n系统会根据目标切换整个文档的内容。', defaultGoal);
     if(newGoal === null) return;
     var goal = newGoal.trim();
     if(!goal){ alert('请输入流程目标'); return; }
@@ -1167,7 +1167,6 @@
     document.getElementById('coverDocNo').textContent = generateDocNo(goal);
     document.getElementById('coverEffectiveDate').textContent = todayStr();
     syncHeaderFromCover();
-    document.getElementById('docSubhead').textContent = '基于 AIGC 自动生成 · 目标：' + match.key;
     renderFlowchart(goal);
     alert('✅ 已根据「' + goal + '」生成完整文档！\n\n流程类型：' + match.key + '\n\n已自动更新所有章节和表格。');
   });
@@ -1499,7 +1498,7 @@
     if(e.target === this) this.classList.remove('active');
   });
 
-  // ==================== 生成 .docx（关键：使用 docx 库） ====================
+  // ==================== 生成 .docx（使用 docx 库） ====================
   document.getElementById('previewWordBtn').addEventListener('click', function(){
     showToast('⏳ 正在生成 Word 文档...', false);
 
@@ -1530,14 +1529,11 @@
     var WidthType = docx.WidthType;
     var AlignmentType = docx.AlignmentType;
     var BorderStyle = docx.BorderStyle;
-    var HeadingLevel = docx.HeadingLevel;
     var ImageRun = docx.ImageRun;
     var PageBreak = docx.PageBreak;
     var Header = docx.Header;
     var Footer = docx.Footer;
     var PageNumber = docx.PageNumber;
-    var TabStopType = docx.TabStopType;
-    var convertInchesToTwip = docx.convertInchesToTwip;
     var convertMillimetersToTwip = docx.convertMillimetersToTwip;
 
     // 读数据
@@ -1553,7 +1549,7 @@
     var purpose = document.getElementById('purposeText').textContent.trim();
     var scope = document.getElementById('scopeText').textContent.trim();
 
-    // 获取表格数据（去掉按钮）
+    // 获取表格数据
     function getTableData(tableId){
       var table = document.getElementById(tableId);
       if(!table) return {headers: [], rows: []};
@@ -1606,16 +1602,12 @@
       imageBuffer = bytes;
     }
 
-    // 颜色
     var COLOR_DARK = "1e3d5e";
     var COLOR_LINE = "b0c4de";
     var COLOR_TABLE_HEADER = "f1f6fa";
 
-    // 辅助：创建表格
     function createTable(headers, rows, columnWidths){
-      var colCount = headers.length;
       var tableRows = [];
-      // 表头
       var headerCells = headers.map(function(h, i){
         return new TableCell({
           children: [new Paragraph({
@@ -1629,7 +1621,6 @@
         });
       });
       tableRows.push(new TableRow({ children: headerCells }));
-      // 数据行
       rows.forEach(function(row){
         var cells = row.map(function(cell, i){
           return new TableCell({
@@ -1658,7 +1649,6 @@
       });
     }
 
-    // 辅助：创建标题
     function createHeading(text){
       return new Paragraph({
         children: [new TextRun({ text: text, bold: true, font: "宋体", size: 28, color: COLOR_DARK })],
@@ -1667,16 +1657,14 @@
       });
     }
 
-    // 辅助：创建正文段落
     function createPara(text){
       return new Paragraph({
         children: [new TextRun({ text: text, font: "宋体", size: 21, color: "000000" })],
         spacing: { before: 80, after: 80, line: 360 },
-        indent: { firstLine: convertInchesToTwip(0.3) }
+        indent: { firstLine: convertMillimetersToTwip(7.5) }
       });
     }
 
-    // 封面表格
     function createCoverTable(){
       var rows = [
         new TableRow({
@@ -1790,10 +1778,8 @@
       });
     }
 
-    // 组织文档内容
     var children = [];
 
-    // 封面
     children.push(new Paragraph({
       children: [new TextRun({ text: "流程体系文档", bold: true, font: "宋体", size: 40, color: COLOR_DARK })],
       alignment: AlignmentType.CENTER,
@@ -1807,26 +1793,20 @@
     children.push(createCoverTable());
     children.push(new Paragraph({ children: [new PageBreak()] }));
 
-    // 1. 目的
     children.push(createHeading("1. 目的"));
     children.push(createPara(purpose));
 
-    // 2. 范围
     children.push(createHeading("2. 范围"));
     children.push(createPara(scope));
 
-    // 3. 权责
     children.push(createHeading("3. 权责"));
     children.push(createTable(responsibilityData.headers, responsibilityData.rows, [1200, 2000, 6000]));
 
-    // 4. 参考文件
     children.push(createHeading("4. 参考文件"));
     children.push(createTable(referenceData.headers, referenceData.rows, [1200, 5000, 3000]));
 
-    // 5. 作业内容
     children.push(createHeading("5. 作业内容"));
     workParas.forEach(function(p){
-      // 处理 \n，分成多段
       var lines = p.split('\n');
       lines.forEach(function(line){
         if(line.trim()){
@@ -1835,18 +1815,14 @@
       });
     });
 
-    // 6. 流程基本信息
     children.push(createHeading("6. 流程基本信息"));
     children.push(createTable(basicData.headers, basicData.rows, [1800, 1400, 1800, 1000, 1400, 2400]));
 
-    // 7. 角色职责
     children.push(createHeading("7. 角色职责"));
     children.push(createTable(rolesData.headers, rolesData.rows, [1400, 3800, 1400, 1800, 1400]));
 
-    // 8. 流程步骤与说明
     children.push(createHeading("8. 流程步骤与说明"));
     if(imageBuffer){
-      // 缩放图片：最大宽度 17cm ≈ 6.7英寸，最大高度 12cm ≈ 4.7英寸
       var maxWidthInches = 6.7;
       var maxHeightInches = 4.7;
       var imgWidthInches = flowImgW / 96;
@@ -1872,21 +1848,17 @@
     }
     children.push(createTable(matrixData.headers, matrixData.rows, [900, 2400, 1600, 1600, 1800, 1800]));
 
-    // 9. 版本订正记录
     children.push(createHeading("9. 版本订正记录"));
     children.push(createTable(versionData.headers, versionData.rows, [1200, 1600, 1200, 3200, 1200]));
 
-    // 10. 相关文件与记录
     children.push(createHeading("10. 相关文件与记录"));
     children.push(createTable(docsData.headers, docsData.rows, [3000, 2400, 1000, 2400]));
 
-    // 11. KPI
     children.push(createHeading("11. 关键绩效指标 (KPI)"));
     children.push(createTable(kpiData.headers, kpiData.rows, [2400, 3600, 1400, 1400, 1600]));
 
     // 页眉
     var headerChildren = [];
-    // 页眉表格：左边 Logo，中间标题
     headerChildren.push(new Table({
       rows: [new TableRow({
         children: [
@@ -1961,7 +1933,6 @@
       })
     ];
 
-    // 创建文档
     var doc = new Document({
       styles: {
         default: {
@@ -1997,16 +1968,13 @@
       }]
     });
 
-    // 打包下载
     Packer.toBlob(doc).then(function(blob){
       var downloadName = fileName + '_流程体系文件_' + new Date().toISOString().slice(0,10) + '.docx';
       try {
-        // 优先用 saveAs（FileSaver.js）
         if(window.saveAs){
           saveAs(blob, downloadName);
-          showToast('✅ Word 文档已生成并下载：' + downloadName + '\n（真正的 .docx 格式，页眉页脚完整）', false);
+          showToast('✅ Word 文档已生成并下载：' + downloadName, false);
         } else {
-          // 回退方案
           var url = URL.createObjectURL(blob);
           var a = document.createElement('a');
           a.href = url;
@@ -2021,7 +1989,6 @@
           showToast('✅ Word 文档已生成：' + downloadName, false);
         }
       } catch(e){
-        // 最终回退
         var url2 = URL.createObjectURL(blob);
         var a2 = document.createElement('a');
         a2.href = url2;
@@ -2201,7 +2168,6 @@
     document.getElementById('coverDocNo').textContent = generateDocNo(goal);
     document.getElementById('coverEffectiveDate').textContent = todayStr();
     syncHeaderFromCover();
-    document.getElementById('docSubhead').textContent = '基于 AIGC 自动生成 · 目标：' + match.key;
     renderFlowchart(goal);
     setTimeout(openPreview, 600);
   });
